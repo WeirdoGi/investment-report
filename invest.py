@@ -66,7 +66,7 @@ def fetch_ticker_data(tickers: list[str]) -> dict[str, dict]:
                 "return_pct": calculate_return(price_today, price_1yr_ago),
                 "status": "ok",
             }
-        except Exception:
+        except (ValueError, KeyError, IndexError, AttributeError):
             results[ticker] = {"return_pct": None, "status": "unavailable"}
 
     return results
