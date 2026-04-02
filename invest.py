@@ -28,6 +28,24 @@ def allocate_budget(budget: float, ticker_returns: dict[str, float]) -> dict[str
     return result
 
 
+def generate_notes(
+    ticker: str,
+    return_pct: float | None,
+    allocation: float,
+    all_returns: dict[str, float | None],
+) -> str:
+    """Generate a human-readable explanation for a ticker's placement in the report."""
+    if return_pct is None:
+        return "Data unavailable — skipped"
+    pct_str = f"{return_pct * 100:.1f}%"
+    if return_pct <= 0:
+        return f"Excluded: {'negative' if return_pct < 0 else 'zero'} return ({pct_str})"
+    valid_returns = [r for r in all_returns.values() if r is not None and r > 0]
+    if valid_returns and return_pct == max(valid_returns):
+        return f"Highest 1-year return in candidate list at {pct_str}"
+    return f"Positive 1-year return of {pct_str}"
+
+
 def main():
     pass
 

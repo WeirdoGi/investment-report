@@ -49,3 +49,35 @@ def test_allocation_all_negative_returns_zero():
 def test_allocation_single_winner_gets_full_budget():
     result = allocate_budget(500.0, {"VOO": 0.15})
     assert result["VOO"] == pytest.approx(500.0)
+
+
+from invest import generate_notes
+
+
+def test_notes_highest_return():
+    # VOO has the highest return among the set
+    note = generate_notes("VOO", 0.30, 750.0, {"VOO": 0.30, "QQQ": 0.10})
+    assert "highest" in note.lower()
+    assert "30.0%" in note
+
+
+def test_notes_positive_not_highest():
+    note = generate_notes("QQQ", 0.10, 250.0, {"VOO": 0.30, "QQQ": 0.10})
+    assert "10.0%" in note
+    assert "highest" not in note.lower()
+
+
+def test_notes_negative_return():
+    note = generate_notes("BND", -0.05, 0.0, {"VOO": 0.20, "BND": -0.05})
+    assert "excluded" in note.lower()
+    assert "-5.0%" in note
+
+
+def test_notes_zero_return():
+    note = generate_notes("GLD", 0.0, 0.0, {"VOO": 0.20, "GLD": 0.0})
+    assert "excluded" in note.lower()
+
+
+def test_notes_data_unavailable():
+    note = generate_notes("XYZ", None, 0.0, {"VOO": 0.20, "XYZ": None})
+    assert "unavailable" in note.lower()
