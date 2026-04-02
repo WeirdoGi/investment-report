@@ -31,7 +31,7 @@ def allocate_budget(budget: float, ticker_returns: dict[str, float]) -> dict[str
 def generate_notes(
     ticker: str,
     return_pct: float | None,
-    allocation: float,
+    _allocation: float,
     all_returns: dict[str, float | None],
 ) -> str:
     """Generate a human-readable explanation for a ticker's placement in the report."""
