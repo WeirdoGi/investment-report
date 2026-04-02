@@ -163,10 +163,12 @@ def test_html_contains_plotly_script():
 
 
 def test_html_is_self_contained():
-    # Must not reference any external CDN URLs
+    # Must not load any external scripts via <script src=...> — Plotly is embedded inline.
+    # (The plotly bundle itself contains "cdn.plot.ly" as an internal string, so we check
+    # for external script tags specifically rather than raw string presence.)
     html = generate_html(1000.0, SAMPLE_RESULTS, "2026-04-02")
-    assert "cdn.plot.ly" not in html
-    assert "cdn.jsdelivr" not in html
+    assert 'src="https://cdn.plot.ly' not in html
+    assert 'src="https://cdn.jsdelivr' not in html
 
 
 def test_html_excluded_tickers_appear_in_table():
