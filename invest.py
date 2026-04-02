@@ -46,6 +46,32 @@ def generate_notes(
     return f"Positive 1-year return of {pct_str}"
 
 
+def fetch_ticker_data(tickers: list[str]) -> dict[str, dict]:
+    """
+    Fetch 1-year price data for each ticker via yfinance.
+    Returns {ticker: {"return_pct": float|None, "status": "ok"|"unavailable"}}
+    """
+    results = {}
+    end = datetime.today()
+    start = end - timedelta(days=370)  # slightly more than 365 to ensure coverage
+
+    for ticker in tickers:
+        try:
+            hist = yf.Ticker(ticker).history(start=start, end=end)
+            if hist.empty or len(hist) < 2:
+                raise ValueError("Insufficient data")
+            price_1yr_ago = hist["Close"].iloc[0]
+            price_today = hist["Close"].iloc[-1]
+            results[ticker] = {
+                "return_pct": calculate_return(price_today, price_1yr_ago),
+                "status": "ok",
+            }
+        except Exception:
+            results[ticker] = {"return_pct": None, "status": "unavailable"}
+
+    return results
+
+
 def main():
     pass
 

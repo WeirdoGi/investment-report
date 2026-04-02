@@ -81,3 +81,53 @@ def test_notes_zero_return():
 def test_notes_data_unavailable():
     note = generate_notes("XYZ", None, 0.0, {"VOO": 0.20, "XYZ": None})
     assert "unavailable" in note.lower()
+
+
+from unittest.mock import patch, MagicMock
+import pandas as pd
+from invest import fetch_ticker_data
+
+
+def _make_mock_ticker(price_today, price_1yr_ago):
+    """Helper: returns a mock yfinance Ticker with history() returning two prices."""
+    mock_ticker = MagicMock()
+    dates = pd.date_range(end=pd.Timestamp.today(), periods=2, freq="365D")
+    mock_ticker.history.return_value = pd.DataFrame(
+        {"Close": [price_1yr_ago, price_today]}, index=dates
+    )
+    return mock_ticker
+
+
+def test_fetch_returns_correct_return_pct():
+    with patch("invest.yf.Ticker") as mock_yf:
+        mock_yf.return_value = _make_mock_ticker(120.0, 100.0)
+        result = fetch_ticker_data(["VOO"])
+    assert result["VOO"]["return_pct"] == pytest.approx(0.20)
+    assert result["VOO"]["status"] == "ok"
+
+
+def test_fetch_single_ticker_failure_does_not_crash():
+    def side_effect(ticker):
+        if ticker == "BAD":
+            m = MagicMock()
+            m.history.return_value = pd.DataFrame()  # empty — simulates fetch failure
+            return m
+        return _make_mock_ticker(120.0, 100.0)
+
+    with patch("invest.yf.Ticker", side_effect=side_effect):
+        result = fetch_ticker_data(["VOO", "BAD"])
+
+    assert result["VOO"]["status"] == "ok"
+    assert result["BAD"]["status"] == "unavailable"
+    assert result["BAD"]["return_pct"] is None
+
+
+def test_fetch_all_tickers_fail_returns_all_unavailable():
+    with patch("invest.yf.Ticker") as mock_yf:
+        m = MagicMock()
+        m.history.return_value = pd.DataFrame()
+        mock_yf.return_value = m
+        result = fetch_ticker_data(["VOO", "QQQ"])
+
+    assert result["VOO"]["status"] == "unavailable"
+    assert result["QQQ"]["status"] == "unavailable"
