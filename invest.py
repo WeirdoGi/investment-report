@@ -8,6 +8,11 @@ import plotly.graph_objects as go
 from datetime import datetime, timedelta
 
 
+def calculate_return(price_today: float, price_1yr_ago: float) -> float:
+    """Return the fractional 1-year return (e.g. 0.20 for +20%)."""
+    return (price_today - price_1yr_ago) / price_1yr_ago
+
+
 def main():
     pass
 
