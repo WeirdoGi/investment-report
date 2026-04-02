@@ -159,7 +159,41 @@ def generate_html(budget: float, results: list[dict], generated_date: str) -> st
 
 
 def main():
-    pass
+    print(f"Fetching data for {len(TICKERS)} tickers...")
+    raw = fetch_ticker_data(TICKERS)
+
+    if all(v["status"] == "unavailable" for v in raw.values()):
+        print("ERROR: Could not fetch data for any ticker. Check your internet connection.")
+        return
+
+    ticker_returns = {t: v["return_pct"] for t, v in raw.items()}
+    allocations = allocate_budget(BUDGET, {t: r for t, r in ticker_returns.items() if r is not None})
+
+    # Build results list, sorted by return descending (None sorts last)
+    results = []
+    for ticker, data in raw.items():
+        allocation = allocations.get(ticker, 0.0)
+        notes = generate_notes(ticker, data["return_pct"], allocation, ticker_returns)
+        results.append({
+            "ticker": ticker,
+            "return_pct": data["return_pct"],
+            "allocation": allocation,
+            "notes": notes,
+            "status": data["status"],
+        })
+
+    results.sort(key=lambda r: (r["return_pct"] is None, -(r["return_pct"] or 0)))
+
+    generated_date = datetime.today().strftime("%Y-%m-%d")
+    html = generate_html(BUDGET, results, generated_date)
+
+    with open("report.html", "w", encoding="utf-8") as f:
+        f.write(html)
+
+    print(f"Report written to report.html")
+    print(f"Budget: ${BUDGET:,.2f} across {len(TICKERS)} candidates")
+    allocated_count = sum(1 for r in results if r["allocation"] > 0)
+    print(f"Allocated to {allocated_count} positive-return ticker(s).")
 
 
 if __name__ == "__main__":
