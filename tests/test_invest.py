@@ -131,3 +131,45 @@ def test_fetch_all_tickers_fail_returns_all_unavailable():
 
     assert result["VOO"]["status"] == "unavailable"
     assert result["QQQ"]["status"] == "unavailable"
+
+
+from invest import generate_html
+
+
+SAMPLE_RESULTS = [
+    {"ticker": "VOO", "return_pct": 0.24, "allocation": 750.0, "notes": "Highest 1-year return in candidate list at 24.0%", "status": "ok"},
+    {"ticker": "QQQ", "return_pct": 0.08, "allocation": 250.0, "notes": "Positive 1-year return of 8.0%", "status": "ok"},
+    {"ticker": "BND", "return_pct": -0.03, "allocation": 0.0,  "notes": "Excluded: negative return (-3.0%)", "status": "ok"},
+    {"ticker": "XYZ", "return_pct": None,  "allocation": 0.0,  "notes": "Data unavailable — skipped", "status": "unavailable"},
+]
+
+
+def test_html_contains_summary_bar():
+    html = generate_html(1000.0, SAMPLE_RESULTS, "2026-04-02")
+    assert "$1,000.00" in html
+    assert "2026-04-02" in html
+    assert "4" in html  # number of candidates evaluated
+
+
+def test_html_contains_ticker_names():
+    html = generate_html(1000.0, SAMPLE_RESULTS, "2026-04-02")
+    for ticker in ["VOO", "QQQ", "BND", "XYZ"]:
+        assert ticker in html
+
+
+def test_html_contains_plotly_script():
+    html = generate_html(1000.0, SAMPLE_RESULTS, "2026-04-02")
+    assert "plotly" in html.lower()
+
+
+def test_html_is_self_contained():
+    # Must not reference any external CDN URLs
+    html = generate_html(1000.0, SAMPLE_RESULTS, "2026-04-02")
+    assert "cdn.plot.ly" not in html
+    assert "cdn.jsdelivr" not in html
+
+
+def test_html_excluded_tickers_appear_in_table():
+    html = generate_html(1000.0, SAMPLE_RESULTS, "2026-04-02")
+    assert "Excluded" in html
+    assert "unavailable" in html.lower()
