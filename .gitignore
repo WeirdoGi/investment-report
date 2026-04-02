@@ -1,0 +1,23 @@
+# Desktop shortcuts & Windows clutter
+*.url
+*.lnk
+desktop.ini
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+.env
+venv/
+env/
+
+# Generated output
+report.html
+
+# Claude / Superpowers session files
+.claude/
+.superpowers/
